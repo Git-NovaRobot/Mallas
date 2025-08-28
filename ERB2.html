@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERB 2 · Malla Interactiva</title>
+  <style>
+    :root{
+      --primary:#C7D300;    /* lima */
+      --secondary:#6A1B9A;  /* morado */
+      --teal:#00A7C7;       /* cian */
+      --ink:#253442;        /* texto oscuro */
+      --muted:#7B8A97;
+      --bg:#F6F9FB;
+      --card:#FFFFFF;
+      --ring: rgba(106,27,154,.25);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--ink); background:linear-gradient(180deg,var(--bg),#fff 40%);
+    }
+
+    .app{display:grid; grid-template-columns: 290px 1fr; min-height:100vh}
+
+    /* = Sidebar = */
+    .sidebar{
+      position:sticky; top:0; align-self:start; height:100vh; overflow:auto;
+      background: radial-gradient(1200px 500px at -200px -200px, rgba(0,167,199,.08), transparent 60%), #0d1520;
+      color:#E6F7FF; padding:20px 16px; border-right:1px solid rgba(255,255,255,.08);
+    }
+    .brand{display:flex; gap:12px; align-items:center; margin-bottom:18px}
+    .brand img{height:44px; width:auto; display:block; filter: drop-shadow(0 3px 10px rgba(0,0,0,.25));}
+    .brand h1{font-size:18px; line-height:1.1; margin:0}
+    .tag{display:inline-block; margin-top:4px; font-size:12px; opacity:.9; color:#bde7f2}
+
+    .nav{margin-top:14px; display:flex; flex-direction:column; gap:6px}
+    .nav input{width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:#fff}
+    .nav a{
+      text-decoration:none; color:#e9e9ff; padding:10px 12px; border-radius:12px; display:flex; align-items:center; gap:8px;
+      border:1px solid transparent; transition:.2s ease; font-size:14px
+    }
+    .nav a .dot{height:8px;width:8px;border-radius:999px;background:var(--teal); box-shadow:0 0 0 2px rgba(0,167,199,.25)}
+    .nav a:hover{background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.14)}
+    .nav a.active{background:linear-gradient(90deg, rgba(199,211,0,.18), rgba(106,27,154,.18)); border-color:rgba(199,211,0,.35)}
+
+    .legend{margin-top:14px; font-size:12px; color:#b8c6d4}
+
+    /* = Main = */
+    header{
+      position:sticky; top:0; z-index:50; backdrop-filter:saturate(180%) blur(10px);
+      background:rgba(255,255,255,.7); border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    .hdr{max-width:1160px; margin:auto; padding:14px 20px; display:flex; justify-content:space-between; align-items:center}
+    .hdr h2{margin:0; font-size:18px}
+    .hdr .actions{display:flex; gap:8px}
+    .btn{appearance:none; border:none; background:var(--secondary); color:#fff; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; box-shadow:0 6px 20px rgba(106,27,154,.18)}
+    .btn.ghost{background:#fff; color:var(--secondary); border:1px solid var(--secondary)}
+
+    main{max-width:1160px; margin: 18px auto; padding: 0 20px 48px}
+
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:18px}
+    .card{grid-column: span 12; background:var(--card); border-radius:18px; border:1px solid rgba(0,0,0,.06); overflow:hidden; box-shadow: 0 10px 30px rgba(13,21,32,.06)}
+
+    @media (min-width: 920px){ .card{grid-column: span 6} }
+
+    .card header{position:relative; inset:auto; background:linear-gradient(90deg,rgba(199,211,0,.15), rgba(106,27,154,.12)); border-bottom:1px solid rgba(0,0,0,.06)}
+    .card .title{padding:14px 16px}
+    .title h3{margin:0; font-size:18px}
+    .meta{font-size:12px; color:#5e6b77}
+
+    .content{display:grid; grid-template-columns:1fr; gap:14px; padding:16px}
+    .kpis{display:flex; gap:8px; flex-wrap:wrap}
+    .kpi{background:linear-gradient(180deg,#fff, #f7fafc); border:1px dashed rgba(106,27,154,.25); border-radius:12px; padding:8px 10px; font-size:12px}
+
+    .imgs{display:grid; grid-template-columns: 1fr; gap:12px}
+    @media (min-width:720px){ .imgs{grid-template-columns: 1fr 1fr} }
+    figure{margin:0; border:1px solid rgba(0,0,0,.06); border-radius:14px; overflow:hidden; background:#fff}
+    figure img{display:block; width:100%; height:260px; object-fit:contain; background:#f3f7fa}
+    figure figcaption{padding:8px 10px; font-size:12px; color:#5e6b77}
+
+    .cta{display:flex; gap:10px; flex-wrap:wrap}
+    .chip{background:rgba(199,211,0,.18); color:#46500a; border:1px solid rgba(199,211,0,.45); border-radius:999px; padding:6px 10px; font-size:12px}
+    .btn.small{padding:8px 12px; border-radius:10px}
+    .btn.teal{background:var(--teal)}
+    .btn.lime{background:var(--primary); color:#344204}
+
+    details.more{border-top:1px dashed rgba(0,0,0,.08); padding-top:10px}
+    details.more > summary{
+      list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px; font-weight:700; color:var(--secondary);
+      padding:8px 0; user-select:none;
+    }
+    details.more > summary::before{content:"▸"; transition:transform .2s ease}
+    details.more[open] > summary::before{transform:rotate(90deg)}
+
+    .two-col{display:grid; grid-template-columns:1fr; gap:12px}
+    @media(min-width:820px){ .two-col{grid-template-columns: 1fr 1fr} }
+
+    .section{background:#fff; border:1px solid rgba(0,0,0,.05); border-radius:12px; padding:10px 12px}
+    .section h4{margin:0 0 6px; font-size:14px; color:#3e4a56}
+    .section ul{margin:0; padding-left:18px}
+    .section li{margin:4px 0}
+
+    .footer-note{margin-top:28px; font-size:12px; color:#6b7785}
+
+    ::selection{background:rgba(199,211,0,.45)}
+    :focus-visible{outline: 3px solid var(--ring); outline-offset:3px; border-radius:12px}
+
+    @media (max-width: 900px){
+      .app{grid-template-columns: 1fr}
+      .sidebar{position:relative; height:auto}
+      .hdr{padding-left:16px}
+    }
+  
+  /* Lightbox CSS */
+  #lightbox {
+    display: none;
+    position: fixed;
+    top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.8);
+    align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  #lightbox img {
+    max-width: 90%;
+    max-height: 90%;
+    box-shadow: 0 0 20px #fff;
+  }
+</style>
+</head>
+<body>
+  <div id="login-overlay">
+    <div class="login-container">
+      <img src="img/nova-logo.png" alt="NOVA Robot" class="login-logo"/>
+      <h2>Iniciar Sesión</h2>
+      <input type="text" id="login-user" placeholder="Usuario"/>
+      <input type="password" id="login-pass" placeholder="Contraseña"/>
+      <button id="login-btn">Entrar</button>
+      <p id="login-error" style="color:red; display:none;">Usuario o contraseña incorrectos</p>
+    </div>
+  </div>
+  <style>
+    /* Estilos del login */
+    #login-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: #fff; display:flex; align-items:center; justify-content:center;
+      z-index:2000;
+    }
+    .login-container {
+      background:#fff; padding:30px; border-radius:12px; text-align:center;
+      box-shadow:0 0 20px rgba(0,0,0,0.5); width:300px;
+    }
+    .login-logo { width:80px; margin-bottom:20px; }
+    .login-container input {
+      width:100%; padding:10px; margin:8px 0; border:1px solid #ccc; border-radius:6px;
+    }
+    .login-container button {
+      width:100%; padding:10px; background: var(--secondary); color:#fff;
+      border:none; border-radius:6px; cursor:pointer; font-size:16px;
+    }
+  </style>
+  <script>
+    // Credenciales válidas
+    const validCreds = {
+      "NovaRobot Mallas": "NovaRobot2025",
+      "NovaRobot ERB1": "ElectroRobotica1"
+    };
+    document.getElementById('login-btn').addEventListener('click', () => {
+      const user = document.getElementById('login-user').value;
+      const pass = document.getElementById('login-pass').value;
+      if (validCreds[user] === pass) {
+        document.getElementById('login-overlay').style.display = 'none';
+      } else {
+        document.getElementById('login-error').style.display = 'block';
+      }
+    });
+  </script>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="img/nova-logo.png" alt="NOVA Robot" />
+        <div>
+          <h1>NOVA Robot</h1>
+          <span class="tag">Centro de Robótica, Tecnología y Valores</span>
+        </div>
+      </div>
+
+      <div class="nav">
+        <input id="filter" type="search" placeholder="Filtrar clases…" aria-label="Filtrar clases" />
+        <nav id="classNav" aria-label="Navegación de clases"></nav>
+      </div>
+
+      <p class="legend">• Clic para ir a la clase.
+      <br/>• Usa <kbd>G</kbd> para ir arriba.</p>
+    </aside>
+
+    <!-- Main -->
+    <div>
+      <header>
+        <div class="hdr">
+          <h2 id="headerTitle">Malla ERB 2</h2>
+          <div class="actions">
+            <button class="btn ghost" id="expandAll">Expandir todo</button>
+            <button class="btn" id="collapseAll">Contraer todo</button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="grid" id="cards"></section>
+        <p class="footer-note">
+          Sugerencia: coloca tus imágenes en <code>/img</code> con los nombres <code>diagramaN.png</code> y <code>circuitoN.png</code> (donde <em>N</em> es el número de la clase). Si agregas un enlace de Tinkercad en los datos, aparecerá el botón automáticamente.
+        </p>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // ================== Datos de la Malla (completos) ==================
+    // Estructura por clase: n, titulo, resumen, objetivos[], desarrollo[], preguntasObjetivo[], preguntasPropuestas[], guia[], conceptos[], aplicacion, herramientas[], tinkercad, adjuntos[]
+        const MALLA = [
+  {
+    "n": 1,
+    "titulo": "Repaso",
+    "resumen": "Se jugará con un mazo de cartas que contienen:\n\t•\tNombre del componente\n\t•\tSímbolo eléctrico\n\t•\tPregunta de función o partes\n\nLos niños deberán identificar componentes, sus funciones y partes según la carta que les toque, por equipos o individualmente.",
+    "objetivos": [
+      "1. Repasar conceptos clave acerca de el primer curso",
+      "2. Identificar cada componente con su función y esquematico (simbolo electrico)",
+      "3. Aclarar dudas de cada parte de los componentes",
+      "Modalidad: explicación guiada + juego análogo + implementación libre"
+    ],
+    "desarrollo": [
+      "10 min – Breve repaso teórico de cada componente (¿qué es, cómo funciona).",
+      "30 min – Juego de cartas en parejas para reforzar símbolos y características.",
+      "20 min – Discusión grupal: revisamos respuestas y aclaramos dudas.",
+      "20 min - Circuito libre con fin de demostrar capacidades adquiridas.",
+      "10 min – Cierre"
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Puedo reconocer y nombrar los componentes electrónicos básicos?",
+      "•\t¿Puedo relacionar el símbolo con el nombre y su uso?",
+      "•\t¿Puedo explicar brevemente cómo funciona un componente?",
+      "•\t¿Puedo identificar las patas del transistor correctamente?"
+    ],
+    "preguntasPropuestas": [
+      "• ¿Cuál es el símbolo de un transistor?",
+      "•\t¿Dónde está la base, el colector y el emisor?",
+      "•\t¿Qué es una LDR y qué pasa si recibe mucha luz?",
+      "•\t¿Cómo se conecta un buzzer?",
+      "•\t¿Qué cambia si giro el potenciómetro?",
+      "•\t¿Qué hace el pulsador en un circuito?",
+      "•\t¿Qué diferencia hay entre motor y buzzer?"
+    ],
+    "guia": [
+      "•\tEstrategia activa: juego como herramienta de aprendizaje lúdico.",
+      "•\tRefuerzo de conocimientos previos (de ERB1) antes de entrar en temas nuevos.",
+      "•\tEnfoque visual y kinestésico: cartas ilustradas y posible manipulación física.",
+      "•\tColaboración: se permite preguntar entre compañeros y reforzar en equipo.",
+      "•\tEvaluación formativa: observación del desempeño y comprensión durante el juego."
+    ],
+    "conceptos": [
+      "•\tTransistor: símbolo, patas (B-C-E), uso como interruptor.",
+      "•\tLDR: sensor de luz, símbolo, uso como entrada variable.",
+      "•\tBuzzer: símbolo, sonido, diferencia entre activo/pasivo.",
+      "•\tPotenciómetro: resistencia variable, símbolo, uso para controlar brillo/velocidad.",
+      "•\tMotor: movimiento, símbolo, comparación con el buzzer.",
+      "•\tPulsador: entrada momentánea, símbolo, comparación con interruptor fijo.",
+      "•\tResistencia: control de corriente, símbolo, relación con LDR y potenciómetro.",
+      "•\tSímbolos electrónicos básicos y su correspondencia visual."
+    ],
+    "aplicacion": "• A interpretación de cada estudiante, se analizará el mismo dentro del cierre.",
+    "herramientas": [
+      "N.A"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "Tarjetas para imprimir en hojas bilbiografiacas:"
+    ]
+  },
+  {
+    "n": 2,
+    "titulo": "Transistores",
+    "resumen": "Los niños armarán un pequeño circuito donde, al presionar un botón (o tocar un alambre), se activa un transistor NPN que enciende un LED o buzzer.\nA través de este ejercicio podrán observar cómo el transistor actúa como interruptor controlado.\n\nAdicionalmente, usarán tarjetas para identificar:\n\t•\tEl símbolo del transistor\n\t•\tSus partes (Base, Colector, Emisor)\n\t•\tSu orientación física en protoboard",
+    "objetivos": [
+      "1.\tComprender el funcionamiento básico del transistor como interruptor.",
+      "2.\tIdentificar las partes del transistor (base, colector, emisor).",
+      "3.\tAplicar el transistor en un circuito sencillo para controlar la corriente.",
+      "4.\tEstimular la curiosidad mediante la manipulación directa y la experimentación.",
+      "Modalidad: Individual – guiado paso a paso."
+    ],
+    "desarrollo": [
+      "•\t15 min – Introducción teórica: Se explicará cómo funciona el transistor como interruptor electrónico, identificando sus tres terminales: base, colector y emisor.",
+      "•\t45 min – Taller práctico: Cada estudiante arma un circuito con un transistor NPN, un LED, una resistencia y una pila. Se les guía para activar/desactivar el paso de corriente con la base.",
+      "•\t15 min – Socialización guiada: Los estudiantes comparan lo que ocurre en su circuito y responden preguntas como: ¿qué pasa si la base no recibe señal?",
+      "•\t15 min – Cierre: Se refuerzan conceptos clave, se muestra el símbolo del transistor y se realizan preguntas diagnósticas para afianzar lo aprendido."
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Puedo identificar y nombrar las partes del transistor?",
+      "•\t¿Puedo explicar cómo se usa un transistor como interruptor?",
+      "•\t¿Comprendo cómo se activa el transistor desde la base?",
+      "•\t¿Puedo construir un circuito simple donde un transistor controle un LED?"
+    ],
+    "preguntasPropuestas": [
+      "•\t¿Cuántas terminales tiene un transistor?",
+      "•\t¿Qué hace el transistor cuando activas la base?",
+      "• Qué analogía podemos comparar con el funcionamiento de un transistor?",
+      "• Qué partes tiene un transistor?",
+      "•\t¿Dónde conectas el LED: en la base, el colector o el emisor?",
+      "•\t¿Qué pasa si inviertes el emisor y el colector?",
+      "•\t¿Qué diferencia hay entre un interruptor mecánico y un transistor?"
+    ],
+    "guia": [
+      "•\tSe consolida el concepto del transistor como cerebro/controlador.",
+      "•\tSe desarrolla pensamiento lógico a través de experimentación con flujo de corriente.",
+      "•\tSe promueve la exploración activa, permitiendo errores (como conectar mal las patas y ver qué pasa).",
+      "•\tSe trabaja con material real: protoboard, transistores, LED, resistencia, pulsadores.",
+      "•\tLa guía del docente es clave para identificar patas correctamente (se sugiere usar fichas o etiquetas)."
+    ],
+    "conceptos": [
+      "•\tTransistor NPN (2N2222, 2N3904): Base, Colector, Emisor.",
+      "•\tSímbolo electrónico del transistor.",
+      "•\tModo interruptor (cuando una pequeña corriente en la base permite una mayor corriente entre colector y emisor).",
+      "•\tPolaridad y conexión correcta.",
+      "•\tCorriente de control (base) vs corriente de carga (colector-emisor).",
+      "•\tErrores comunes: invertir terminales, falta de resistencia en la base."
+    ],
+    "aplicacion": "nan",
+    "herramientas": [
+      "1. Transistores 2N2222",
+      "1. Led",
+      "1. Buzzer",
+      "4. Cables",
+      "1. Bateria 9v con su clip"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "nan"
+    ]
+  },
+  {
+    "n": 3,
+    "titulo": "Multimetro\n\"Concepto voltaje\"",
+    "resumen": "Taller práctico: “Exploradores de Circuitos”\n\nLos niños aprenderán a usar el multímetro a través de estaciones de exploración guiadas. En cada estación podrán:\n\t•\tMedir resistencias reales y comprobar con el código de colores.\n\t•\tVer cómo un condensador se carga/desarga al medir voltaje.\n\t•\tVerificar la continuidad de un cable o pista.\n\t•\tMedir el voltaje de una pila.\n• Medir el voltaje generado por un motor.\nCada estudiante rotará por las estaciones, siguiendo una guía paso a paso con dibujos.",
+    "objetivos": [
+      "1.\tReconocer el multímetro como una herramienta esencial para medir variables eléctricas.",
+      "2.\tComprender el uso de las funciones básicas: voltaje, corriente y continuidad.",
+      "3.\tAplicar el multímetro en la medición de componentes simples de manera segura.",
+      "4.\tFomentar la autonomía y el pensamiento crítico en un entorno controlado.",
+      "Modalidad: Individual – práctica supervisada."
+    ],
+    "desarrollo": [
+      "•\t15 min – Introducción teórica: ¿Qué es un multímetro? ¿Para qué sirve? Se explican las funciones básicas y cómo leer la pantalla.",
+      "•\t20 min – Exploración guiada: Cada estudiante mide el voltaje de una pila bajo supervisión, siguiendo el paso a paso del docente.",
+      "•\t25 min – Actividad práctica: Se entrega un circuito simple (LED + resistencia) para medir voltaje y comprobar continuidad de cables. Se anotan resultados.",
+      "•\t15 min – Reto técnico: Con ayuda del docente, cada niño diagnostica un “error” en un pequeño circuito prearmado usando el multímetro.",
+      "•\t15 min – Cierre: Discusión final sobre lo aprendido, su utilidad en la vida real y verificación de aprendizajes mediante preguntas."
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Puedo seleccionar correctamente la función del multímetro para cada tipo de medición?",
+      "•\t¿Sé usar el multímetro para identificar componentes como resistencias, condensadores y cables?",
+      "•\t¿Comprendo la relación entre lo que veo en el multímetro y lo que ocurre en el circuito?",
+      "•\t¿Puedo detectar si una pila está funcionando?"
+    ],
+    "preguntasPropuestas": [
+      "•\t¿Qué unidad mide el multímetro cuando está en modo voltaje?",
+      "•\t¿Cómo sabes si un cable está cortado?",
+      "•\t¿Qué pasa cuando tocas los terminales de una resistencia con las puntas del multímetro?",
+      "•\t¿Qué muestra el multímetro al conectar un condensador recién cargado?",
+      "•\t¿Qué polaridad tiene una pila de 9V?",
+      "• Que sucede si conectamos los cables de polaridad de forma invertida en una bateria?"
+    ],
+    "guia": [
+      "•\tSe introduce el uso de instrumentos reales de medición para conectar la teoría con la práctica.",
+      "•\tSe divide en estaciones de aprendizaje para facilitar el enfoque y rotación organizada.",
+      "•\tSe trabaja con observación y descubrimiento guiado, en lugar de solo teoría.",
+      "•\tEl docente debe reforzar seguridad: puntas bien conectadas, cuidado al medir voltaje.",
+      "•\tIdealmente cada estación tiene al menos un multímetro (o se rota el uso entre grupos pequeños)."
+    ],
+    "conceptos": [
+      "Multímetro: medición de voltaje (V), corriente (A), resistencia (Ω), continuidad.",
+      "•\tResistencia: comparación con código de colores.",
+      "•\tContinuidad: detección de trayectos interrumpidos en un circuito.",
+      "•\tVoltaje: diferencia de potencial entre dos puntos.",
+      "•\tCondensador: almacenamiento de carga eléctrica.",
+      "•\tPolaridad: sentido de flujo eléctrico y símbolos (+/-).",
+      "•\tPrecaución y orden en el uso de herramientas electrónicas."
+    ],
+    "aplicacion": "nan",
+    "herramientas": [
+      "1. Multimetro"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "nan"
+    ]
+  },
+  {
+    "n": 4,
+    "titulo": "Continuidad \n\"Construyamos nuestro propio multimetro\"\nIntroducción al 555",
+    "resumen": "Taller práctico: “Detectives de continuidad”\n\n• Los estudiantes construirán un circuito con un CI 555 que actúa como un medidor de continuidad.\n• Una vez armado, usarán el circuito para probar cables: si el LED se enciende o el buzzer suena, hay continuidad.\n• Se les entregará una “caja misteriosa” con cables: algunos funcionales, otros dañados internamente.\n• El reto será identificar cuáles cables sirven y cuáles no, anotando sus conclusiones en una hoja.\n• Se plantea como un juego de diagnóstico eléctrico con pistas.",
+    "objetivos": [
+      "1.\tComprender de forma básica qué hace un temporizador 555.",
+      "2.\tAplicar el CI 555 en un circuito funcional con propósito específico.",
+      "3.\tUsar el circuito como herramienta para probar continuidad de cables.",
+      "4.\tDesarrollar habilidades de diagnóstico a través del juego.",
+      "Modalidad: Individual – armado guiado con pruebas controladas."
+    ],
+    "desarrollo": [
+      "•\t15 min – Introducción teórica:",
+      "Se presenta el 555 como un “cerebro electrónico pequeñito” que puede tomar decisiones. Se explica que hoy lo usaremos para construir una alarma que nos avisa si hay continuidad (como una versión casera de multímetro).",
+      "Se muestran imágenes del 555, su símbolo y sus patas.",
+      "•\t30 min – Construcción del circuito:",
+      "Paso a paso, cada estudiante arma el circuito con un temporizador 555, una resistencia, un LED o buzzer y cables.",
+      "Al tocar dos extremos de cable conectados al circuito, el 555 activa la alarma (LED/buzzer) si hay continuidad.",
+      "•\t15 min – Pruebas y diagnóstico:",
+      "Se entrega a los niños varios cables (algunos con cortes internos) para probar si conducen o no. Deben usar su “multímetro casero” para descubrir cuáles están dañados.",
+      "•\t15 min – Decoración creativa (opcional si hay tiempo):",
+      "Se permite personalizar el “multímetro” con nombre, etiquetas o colores.",
+      "•\t15 min – Cierre:",
+      "Preguntas de reflexión, socialización de resultados y recordatorio de los usos del 555. Comparación entre un multímetro real y el construido."
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Para qué sirve el 555 en este circuito?",
+      "•\t¿Qué ocurre cuando los cables están conectados?",
+      "•\t¿Cómo sabemos si un cable funciona o está dañado?"
+    ],
+    "preguntasPropuestas": [
+      "•\t¿Cuál es el símbolo del 555?",
+      "•\t¿Qué pasa si el LED no enciende al juntar los cables?",
+      "•\t¿Cómo podríamos usar este circuito en la vida real?"
+    ],
+    "guia": [
+      "•\tUsar analogías simples: el 555 como cerebro que “decide” si sonar o no.",
+      "•\tPromover la curiosidad con preguntas mientras arman.",
+      "•\tFomentar la exploración con fallos intencionales (cables que no sirven).",
+      "•\tHacer énfasis en el rol del 555 como parte lógica del circuito."
+    ],
+    "conceptos": [
+      "•\tCI 555: patas, símbolo y función básica como comparador/temporizador.",
+      "•\tContinuidad: qué significa y cómo se mide.",
+      "•\tCircuito de prueba: qué es y cómo usarlo como herramienta."
+    ],
+    "aplicacion": "•\tEste circuito simula cómo los electricistas y técnicos revisan si un cable está en buen estado.\n\t•\tPermite detectar errores sin verlos, como si tuviéramos “rayos X eléctricos”.",
+    "herramientas": [
+      "•\t1 x Batería de 9V",
+      "•\t1 x Clip con terminales para batería de 9V",
+      "•\t1 x CI 555",
+      "•\t1 x Capacitor electrolítico de 10 µF",
+      "•\t1 x Capacitor cerámico de 0.1 µF",
+      "•\t1 x Resistencia de 6.8 kΩ",
+      "•\t2 x Resistencias de 1 kΩ",
+      "•\t1 x LED (color a elección)",
+      "•\t1 x Pulsador (botón)",
+      "•\t1 x Protoboard",
+      "•\tCables jumper (varios)"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "nan"
+    ]
+  },
+  {
+    "n": 5,
+    "titulo": "Seguidor de Luz\n\"Introducción al proyecto\"",
+    "resumen": "• Cada grupo el kit de contrucción de lego de NovaRobot, donde deberán construir una caja con orificios (simulando sensores) y 2 alumnos juegan el rol de “motores”.\n\t•\tUn alumno externo ilumina con la linterna desde distintos ángulos.\n\t•\tSegún qué orificio reciba más luz, los motores se mueven en esa dirección (ej. paso a la izquierda o derecha).",
+    "objetivos": [
+      "1. Comprender el proposito del proyecto.",
+      "2. Inspirarse en diseños anteriores.",
+      "3. Repasar conceptos clave previos.",
+      "4. Entender cómo reaccionan los sensores a la luz y cómo eso controla el movimiento.",
+      "Modalidad: explicación guiada + juego análogo + primeras ideas de diseño"
+    ],
+    "desarrollo": [
+      "•\t15 min – Introducción al proyecto:",
+      "Se presenta el concepto de un seguidor de luz, explicando que construirán un robot que detecta y se mueve hacia la luz. Se muestra un video o maqueta simple para visualizar el objetivo final.",
+      "•\t30 min – Exploración de conceptos previos para integración",
+      "Cada grupo recibe su kit de construcción LEGO. Se identifican las partes físicas del robot (ruedas, base, motores) y se hace el armado de la estructura.",
+      "El docente guía paso a paso, asegurando que todos los grupos lleguen al mismo punto base.",
+      "•\t30 min – Relación con el concepto de sensor de luz:",
+      "Se plantea una actividad guiada para que los estudiantes exploren con una linterna cómo responde una LDR (fotoresistencia).",
+      "Se hacen preguntas como: ¿qué pasa si la luz se tapa? ¿qué ocurre con el voltaje?",
+      "•\t15 min – Cierre:",
+      "Se conversa sobre lo construido, se refuerza el objetivo del proyecto y se genera expectativa sobre cómo el robot tomará decisiones con la luz en la próxima clase."
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Qué parte del robot reacciona a la luz?",
+      "•\t¿Por qué necesita dos “ojos”?",
+      "•\t¿Qué harías para que el robot gire?",
+      "•\t¿Dónde pondrías los sensores?",
+      "•\t¿Crees que puede hacer sonidos también?"
+    ],
+    "preguntasPropuestas": [
+      "•\t¿Comprendo qué es un seguidor de luz?",
+      "•\t¿Puedo identificar qué componentes puede tener un robot así?",
+      "•\t¿Estoy motivado para trabajar en mi propio diseño?",
+      "•\t¿Puedo relacionar sensores y movimiento?"
+    ],
+    "guia": [
+      "•\tUsar la imaginación y el juego como puerta de entrada al proyecto.",
+      "•\tPermitir que los niños se expresen a través del dibujo y el movimiento.",
+      "•\tIncentivar la curiosidad sobre cómo algo “tan invisible como la luz” puede mover un motor.",
+      "•\tFomentar el trabajo en equipo durante el ejercicio grupal.",
+      "•\tEnfatizar que este proyecto es una creación personal."
+    ],
+    "conceptos": [
+      "•\tLuz como señal (estimulación de sensores).",
+      "•\tSensor LDR: detecta variación de luz → cambia resistencia.",
+      "•\tMotores como actuadores (reaccionan a señales).",
+      "•\tDiseño preliminar y pensamiento de ingeniería."
+    ],
+    "aplicacion": "• El robot que estamos empezando a construir tomará decisiones según la luz que reciba. Del mismo modo, nosotros enfrentamos situaciones donde debemos elegir qué camino seguir.\n• Así como el robot necesita “ver” bien para actuar correctamente, nosotros también necesitamos estar atentos, reflexionar y elegir lo mejor en cada momento.\n• Este proyecto nos enseña que, al igual que las máquinas, nuestras decisiones tienen consecuencias, y debemos aprender a responder con inteligencia y responsabilidad ante lo que nos rodea.",
+    "herramientas": [
+      "nan"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "nan"
+    ]
+  },
+  {
+    "n": 6,
+    "titulo": "Seguidor de Luz\n\"Manipulación de la Fotoresistencia\"",
+    "resumen": "•Los estudiantes arman un circuito con una LDR + resistencia fija + potenciómetro en serie.\n\t•\tConectan el multímetro en paralelo a la LDR para ver el cambio de voltaje al taparla o iluminarla.\n\t•\tObservan cómo el potenciómetro cambia la sensibilidad del sensor.",
+    "objetivos": [
+      "1.Aprender a leer la variación de luz con LDR usando el multímetro.",
+      "2. Controlar la sensibilidad con un potenciómetro.",
+      "Modalidad: repaso práctico + medición + circuito básico en protoboard."
+    ],
+    "desarrollo": [
+      "•\t15 min – Introducción teórica interactiva:",
+      "Se explica qué es una fotoresistencia (LDR) y un potenciómetro, y cómo cambian su valor cuando se les aplica luz o se giran.",
+      "Se comparan con elementos cotidianos: el potenciómetro como una llave de volumen, la LDR como los lentes de sol que se oscurecen.",
+      "•\t25 min – Experimento con multímetro:",
+      "Cada niño mide la resistencia de una LDR y de un potenciómetro.",
+      "Se les guía para ver cómo varía la resistencia al tapar con la mano o girar la perilla.",
+      "Se anotan los resultados y se pregunta: ¿cuál es más sensible? ¿cuál da un rango más amplio?",
+      "•\t30 min – Introducción al divisor de voltaje (exploratorio):",
+      "Se arma un pequeño circuito con una LDR y una resistencia fija, y se mide el voltaje entre el punto medio y GND.",
+      "Luego se prueba el mismo montaje con un potenciómetro en lugar de la resistencia fija.",
+      "Se compara cómo se puede “calibrar” el comportamiento.",
+      "No se conecta a ningún otro componente. Solo se observa el efecto.",
+      "•\t10 min – Registro y reflexión:",
+      "Se invita a los estudiantes a anotar sus observaciones y responder:",
+      "¿Qué hace que el voltaje suba o baje? ¿Qué pasaría si usamos ambos sensores?",
+      "•\t15 min – Cierre: Se conversa en grupo:",
+      "– ¿Para qué podría usar un robot esa información?",
+      "– ¿Qué pasaría si tiene un sensor de cada lado?"
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Qué pasa con el voltaje cuando le tapas la LDR?",
+      "•\t¿Cómo afecta el potenciómetro al comportamiento del sensor?",
+      "•\t¿Dónde pondrías la LDR en el robot?",
+      "•\t¿Cómo sabes si está recibiendo más o menos luz?"
+    ],
+    "preguntasPropuestas": [
+      "•\t¿Puedo armar un circuito con LDR y potenciómetro para leer luz?",
+      "•\t¿Puedo medir correctamente la señal con un multímetro?",
+      "•\t¿Puedo ajustar la sensibilidad del sensor?",
+      "•\t¿Comprendo cómo esa señal puede activar una acción más adelante?"
+    ],
+    "guia": [
+      "•\tUsar la experiencia previa para avanzar rápidamente hacia la medición.",
+      "•\tIncentivar la precisión y la observación a través del multímetro.",
+      "•\tMostrar con ejemplos reales cómo funcionan sensores similares (cortinas automáticas, alumbrado público).",
+      "•\tTrabajar en duplas o tríos para asegurar apoyo entre compañeros.",
+      "•\tFomentar la exploración libre con luz, sombra, objetos, para generar curiosidad."
+    ],
+    "conceptos": [
+      "•\tDivisor de voltaje con LDR.",
+      "•\tSensado analógico: cómo una cantidad de luz se convierte en voltaje.",
+      "•\tUso del potenciómetro como control de sensibilidad.",
+      "•\tLectura de voltaje con multímetro.",
+      "•\tRelación entre luz → voltaje → decisión electrónica."
+    ],
+    "aplicacion": "• Así como la fotoresistencia responde a la cantidad de luz, nosotros también debemos aprender a adaptarnos a las situaciones que nos rodean.\n• Hay momentos donde necesitamos “ver” con más claridad para tomar mejores decisiones, igual que un sensor necesita recibir bien la luz para funcionar correctamente.\n• También como el potenciómetro nos permite ajustar y calibrar el circuito, nosotros también necesitamos aprender a regular nuestras emociones, reacciones y decisiones en diferentes circunstancias.\n• Esta clase nos enseña que incluso una pequeña variación puede cambiar todo un resultado… igual que nuestras acciones en la vida diaria.",
+    "herramientas": [
+      "•\t1 x Fotoresistencia (LDR)",
+      "•\t1 x Potenciómetro",
+      "•\t1 x Resistencia fija (10kΩ sugerido)",
+      "•\t1 x Protoboard",
+      "•\t1 x Multímetro (puede ser compartido)",
+      "•\t1 x Fuente de alimentación (5V a 9V)",
+      "•\tCables de conexión (jumper macho-macho)"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "nan"
+    ]
+  },
+  {
+    "n": 7,
+    "titulo": "Seguidor de Luz",
+    "resumen": "Taller práctico: “¡Reacciona a la luz!”\n\n• Los estudiantes construirán un circuito usando una LDR,  un CI 555 y un LED o motor.\n• El objetivo será lograr que el LED o el motor se activen cuando la LDR reciba suficiente luz.\n• Cada estudiante calibrará su potenciómetro para decidir cuánta luz necesita el sistema para reaccionar.",
+    "objetivos": [
+      "1.\tIntegrar la LDR y el divisor de voltaje con el 555.",
+      "2.\tComprender cómo el voltaje de entrada activa el pin de salida del CI.",
+      "3.\tObservar la respuesta del circuito ante diferentes niveles de luz.",
+      "4.\tDesarrollar habilidades de ajuste fino (calibración).",
+      "📍Modalidad: Individual – montaje guiado."
+    ],
+    "desarrollo": [
+      "•\t15 min – Recordatorio y repaso:",
+      "Se recuerdan los conceptos vistos en clases anteriores: LDR, potenciómetro, divisor de voltaje, 555.",
+      "Se muestra un ejemplo de cómo el voltaje de un divisor puede activar un LED a través del 555.",
+      "•\t30 min – Construcción del circuito 555 + LDR:",
+      "Se guía paso a paso a los estudiantes para construir un circuito donde:",
+      "• La LDR reaccione a la luz.",
+      "• El voltaje del divisor (LDR + potenciómetro o resistencia fija) se conecte al pin 2 del 555.",
+      "• El pin 3 del 555 encienda un LED o motor cuando hay suficiente luz.",
+      "•\t30 min – Calibración y pruebas:",
+      "Se les da tiempo para probar con diferentes niveles de luz y ajustar el potenciómetro.",
+      "Se plantea el reto: “¿puedes hacer que el LED se encienda solo cuando apuntas la linterna desde un lado?”",
+      "•\t15 min – Cierre:",
+      "Reflexión sobre lo aprendido. ¿Qué hizo el 555? ¿Qué papel jugaron la LDR y el potenciómetro?",
+      "Se relaciona con el futuro: “Así es como tu robot sabrá cuándo moverse hacia la luz”."
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Qué ocurre cuando la luz incide sobre la LDR?",
+      "•\t¿Cómo se puede ajustar la sensibilidad del sistema?",
+      "•\t¿Qué función cumple el CI 555 en este circuito?"
+    ],
+    "preguntasPropuestas": [
+      "•\t¿Cómo varía el voltaje del divisor cuando cambia la luz?",
+      "•\t¿Por qué el potenciómetro ayuda a calibrar el circuito?",
+      "•\t¿Qué pasaría si conectáramos dos sensores de luz?"
+    ],
+    "guia": [
+      "•\tUtilizar ejemplos cotidianos: la luz que activa lámparas automáticas, paneles solares que siguen el sol.",
+      "•\tIncentivar la exploración mediante preguntas orientadoras durante la calibración.",
+      "•\tPermitir que los niños ajusten libremente el potenciómetro para experimentar diferentes configuraciones.",
+      "•\tPromover el error como herramienta de aprendizaje (”¿Qué podemos cambiar si no funciona como queremos?”)."
+    ],
+    "conceptos": [
+      "•\tDivisor de voltaje: combinación de resistencias que genera un voltaje de salida dependiente de las condiciones.",
+      "•\tSensor LDR: resistencia que cambia su valor dependiendo de la luz recibida.",
+      "•\tCI 555: chip que interpreta señales y genera una respuesta de salida lógica.",
+      "•\tCalibración: proceso de ajuste fino de un circuito para que reaccione como deseamos."
+    ],
+    "aplicacion": "• Así como en el circuito la LDR detecta cambios de luz para tomar una decisión (encender o apagar un motor o LED), en la vida real debemos aprender a detectar señales del entorno y actuar de manera adecuada.\n• La calibración del potenciómetro nos recuerda que no siempre todo está “listo”, y a veces necesitamos ajustar y mejorar nuestras acciones para lograr el mejor resultado.",
+    "herramientas": [
+      "•\t1 x CI 555",
+      "•\t1 x LDR (fotoresistencia)",
+      "•\t1 x Potenciómetro (10kΩ sugerido)",
+      "•\t1 x Resistencia fija (1kΩ, para LED si se usa)",
+      "•\t1 x LED o Motor DC pequeño",
+      "•\t1 x Batería de 9V y clip de conexión",
+      "•\t1 x Protoboard",
+      "•\tCables jumper"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "nan"
+    ]
+  },
+  {
+    "n": 8,
+    "titulo": "Seguidor de Luz",
+    "resumen": "Taller práctico: “¿De dónde viene la luz?”\n\n• Los estudiantes integrarán dos sensores LDR, cada uno conectado a su propio divisor de voltaje y 555, que activan dos motores independientes.\n• El objetivo será lograr que el robot “gire” hacia la fuente de luz más intensa.",
+    "objetivos": [
+      "1.\tIntegrar dos sensores de luz con dos circuitos 555 independientes.",
+      "2.\tComprender cómo se puede generar un comportamiento “inteligente” mediante comparación.",
+      "3.\tCalibrar el sistema para que reaccione adecuadamente a distintos estímulos.",
+      "📍Modalidad: Individual – montaje guiado con ensayo de condiciones."
+    ],
+    "desarrollo": [
+      "•\t15 min – Introducción guiada:",
+      "Se explica que para que un robot siga la luz, debe comparar dos entradas (una a la izquierda y otra a la derecha).",
+      "Se presenta el reto: construir un sistema de dos “ojos” que tomen decisiones por separado.",
+      "•\t30 min – Montaje del circuito doble:",
+      "Cada LDR se conecta a su propio divisor de voltaje → pin 2 del 555.",
+      "La salida de cada 555 (pin 3) activa un motor distinto (motor izquierdo y motor derecho).",
+      "•\t30 min – Pruebas con linterna:",
+      "Se prueba alumbrar uno u otro lado del robot y se observa cómo gira en dirección a la luz.",
+      "Se calibran los potenciómetros para que ambos lados respondan de forma equilibrada.",
+      "•\t15 min – Cierre:",
+      "Se reflexiona: ¿qué haría el robot si hay luz a ambos lados? ¿y si no hay luz?",
+      "Se deja preparado para añadir estructura física en la próxima clase."
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Cómo sabe el robot hacia dónde girar?",
+      "•\t¿Qué función cumple cada LDR en el comportamiento del robot?",
+      "•\t¿Cómo afecta la calibración de los potenciómetros al resultado?"
+    ],
+    "preguntasPropuestas": [
+      "•\t¿Qué pasaría si un sensor recibe más luz que el otro?",
+      "•\t¿Qué motor se enciende si ambos sensores reciben la misma luz?",
+      "•\t¿Cómo podrías hacer que tu robot solo avance si hay mucha luz?"
+    ],
+    "guia": [
+      "•\tUsar analogía de “ojos” del robot: cada sensor actúa como un ojo que controla una rueda.",
+      "•\tIncentivar ensayo y error con preguntas: “¿qué pasa si tapo uno?”, “¿y si los cambio de lado?”",
+      "•\tMotivar la competencia amistosa: “¿Cuál robot gira más rápido hacia la luz?”"
+    ],
+    "conceptos": [
+      "•\tComparación sensorial: decidir con base en dos señales.",
+      "•\tComportamiento condicional: si pasa esto, haz esto otro.",
+      "•\tControl de motores por salida lógica: cómo el 555 gobierna un actuador."
+    ],
+    "aplicacion": "• Así como el robot toma decisiones al comparar información de dos sensores, nosotros también debemos evaluar distintas opciones antes de actuar.\n• Esta clase enseña que no siempre hay una única respuesta y que saber comparar con criterio nos ayuda a elegir mejor.",
+    "herramientas": [
+      "•\t2 x CI 555",
+      "•\t2 x LDR",
+      "•\t2 x Potenciómetros",
+      "•\t2 x Resistencias (1kΩ para LEDs o base de transistores)",
+      "•\t2 x Transistores NPN (opcional, si los motores lo requieren)",
+      "•\t2 x Motores DC",
+      "•\t2 x Diodos 1N4007 (protección de motores)",
+      "•\t1 x Protoboard grande o 2 medianas",
+      "•\tBatería de 9V + clip",
+      "•\tCables jumper"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "nan"
+    ]
+  },
+  {
+    "n": 9,
+    "titulo": "Seguidor de Luz",
+    "resumen": "• Cada estudiante montará su circuito completamente funcional sobre el chasis del robot.\n• El objetivo será lograr que el robot gire o avance hacia la luz real usando sus dos “ojos” (LDRs) y motores.\n• Se validará que el sistema funcione como se planeó y se ajustarán detalles físicos.",
+    "objetivos": [
+      "1.\tIntegrar todos los componentes físicos y electrónicos sobre la estructura del robot.",
+      "2.\tValidar el funcionamiento completo del seguidor de luz en condiciones reales.",
+      "3.\tFortalecer habilidades de montaje, fijación y solución de problemas físicos.",
+      "📍Modalidad: Individual – armado con acompañamiento técnico."
+    ],
+    "desarrollo": [
+      "•\t15 min – Preparación del chasis:",
+      "Cada estudiante revisa que su base esté bien ensamblada: ruedas firmes, soporte para la batería, cables bien ubicados.",
+      "•\t30 min – Montaje del circuito en el chasis:",
+      "Se fijan los componentes al chasis:",
+      "• Motores conectados y firmes",
+      "• LDRs colocadas al frente, como “ojos” del robot",
+      "• Batería bien sujeta",
+      "• Protoboard fija o aislada con cinta",
+      "•\t30 min – Pruebas de movimiento:",
+      "Se prueba el funcionamiento completo:",
+      "• ¿El robot reacciona correctamente a la luz?",
+      "• ¿Gira hacia la linterna?",
+      "• ¿Se mueve de forma equilibrada?",
+      "Se hacen ajustes en la posición de los sensores y se recalibran potenciómetros si es necesario.",
+      "•\t15 min – Cierre:",
+      "Reflexión: ¿ya parece un robot que toma decisiones? ¿qué falta por mejorar?",
+      "Se documentan errores comunes y se resuelven con ayuda."
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Está bien posicionada cada parte del robot?",
+      "•\t¿Qué ajustes debo hacer para que funcione mejor?",
+      "•\t¿Mi robot cumple con la función de seguir la luz?"
+    ],
+    "preguntasPropuestas": [
+      "•\t¿Qué pasa si la LDR está muy alta o muy baja?",
+      "•\t¿Cómo afecta que un motor esté mal fijado?",
+      "•\t¿Qué harías si solo un motor gira al recibir luz?"
+    ],
+    "guia": [
+      "•\tSupervisar que cada estudiante tenga la estructura completa antes de empezar.",
+      "•\tFomentar trabajo paciente: montaje ordenado, pruebas paso a paso.",
+      "•\tReforzar el aprendizaje desde el error: si algo falla, ¡se aprende más!",
+      "•\tIncentivar apoyo entre compañeros: “ayúdame a fijar este motor”, “¿cómo conectaste el tuyo?”"
+    ],
+    "conceptos": [
+      "•\tIntegración física y electrónica: unir el circuito al entorno mecánico.",
+      "•\tValidación funcional: probar si el sistema hace lo que debe hacer.",
+      "•\tCalibración sensorial real: ajustar LDRs en función del entorno."
+    ],
+    "aplicacion": "• En la vida, como en este proyecto, no basta con que las partes funcionen por separado: hay que unirlas bien para que el todo funcione.\n• Montar el robot nos enseña que incluso las mejores ideas necesitan buena ejecución para moverse hacia sus objetivos.",
+    "herramientas": [
+      "(Son los mismos de la clase anterior, ahora fijados al chasis)",
+      "•\t2 x CI 555",
+      "•\t2 x LDR",
+      "•\t2 x Potenciómetros",
+      "•\t2 x Resistencias",
+      "•\t2 x Transistores NPN (opcional)",
+      "•\t2 x Motores DC mas sus ruedas",
+      "•\t2 x Diodos",
+      "•\t1 x Protoboard",
+      "•\t1 x Chasis",
+      "•\t2 x Ruedas",
+      "•\t1 x Porta baterías (o batería de 9V + clip)",
+      "•\tCables jumper",
+      "•\tCinta doble faz / bridas / silicona (para fijación)"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "nan"
+    ]
+  },
+  {
+    "n": 10,
+    "titulo": "Seguidor de Luz",
+    "resumen": "Taller práctico: “Luces de decisión”\n\n• Cada estudiante añadirá dos LEDs indicadores a su robot: uno para motor izquierdo y otro para motor derecho.\n• El objetivo será que cuando un motor se active, el LED correspondiente también lo haga, mostrando hacia qué lado se está moviendo el robot.",
+    "objetivos": [
+      "1.\tIntegrar LEDs como salida lógica paralela para visualizar el comportamiento del robot.",
+      "2.\tComprender la función del pin 3 del 555 como controlador de múltiples elementos.",
+      "3.\tValidar el funcionamiento lógico del sistema sin necesidad de que el robot se mueva.",
+      "📍Modalidad: Individual – integración final."
+    ],
+    "desarrollo": [
+      "•\t15 min – Introducción práctica:",
+      "Se plantea la pregunta: “¿Cómo podemos saber qué decisión tomó el robot sin necesidad de verlo moverse?”",
+      "Se explica que agregar LEDs conectados a los pines de salida del 555 nos permitirá ver esa decisión en tiempo real.",
+      "•\t30 min – Montaje de LEDs indicadores:",
+      "Cada pin 3 del CI 555 se conecta a un LED en paralelo con el transistor/motor.",
+      "Se utiliza una resistencia limitadora (330Ω–1kΩ) para cada LED.",
+      "Los LEDs se colocan al frente del robot, en los laterales, como “ojos de dirección”.",
+      "•\t30 min – Pruebas de comportamiento con luz:",
+      "Se prueba alumbrar con una linterna desde diferentes lados.",
+      "Se observa cómo se activa un LED u otro, según qué sensor capta más luz.",
+      "Se puede mover el robot o dejarlo quieto para solo observar el comportamiento lógico.",
+      "•\t15 min – Cierre reflexivo:",
+      "¿Qué ventajas tiene ver lo que piensa el robot?",
+      "¿Cómo podríamos usar estos indicadores para mejorar el diseño o entender fallos?"
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Cómo sé hacia qué lado quiere girar mi robot?",
+      "•\t¿Qué hace el pin 3 del 555?",
+      "•\t¿Por qué es útil agregar un indicador visual?"
+    ],
+    "preguntasPropuestas": [
+      "•\t¿Qué ocurre si se encienden ambos LEDs?",
+      "•\t¿Qué podría indicar que un LED no prende nunca?",
+      "•\t¿Qué ventajas tiene ver lo que el circuito está haciendo por dentro?"
+    ],
+    "guia": [
+      "•\tExplicar con ejemplos reales: luces direccionales de carros, luces de error en aparatos.",
+      "•\tUsar colores diferentes para los LEDs (rojo y verde, por ejemplo).",
+      "•\tMotivar a los niños a ubicar bien sus LEDs para que luzcan como parte del robot."
+    ],
+    "conceptos": [
+      "•\tSalida lógica paralela: un pin puede controlar varias cosas a la vez.",
+      "•\tIndicador visual: señal que representa lo que ocurre internamente.",
+      "•\tRetroalimentación instantánea: poder ver lo que pasa facilita el diagnóstico."
+    ],
+    "aplicacion": "• En la vida, igual que en los robots, a veces necesitamos señales que nos ayuden a entender qué está pasando internamente.\n• Aprender a “leer” esas señales nos permite tomar mejores decisiones y también ayudar a otros cuando algo va mal.",
+    "herramientas": [
+      "•\t2 x LEDs (preferiblemente colores distintos)",
+      "•\t2 x Resistencias (330Ω a 1kΩ)",
+      "•\tCables jumper",
+      "•\tCinta doble faz o soporte para fijar LEDs al robot",
+      "•\tRobot ensamblado de clase anterior"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "nan"
+    ]
+  },
+  {
+    "n": 11,
+    "titulo": "Seguidor de Luz",
+    "resumen": "Reto final: “¡Sigue la luz y conquista el circuito!”\n\n• Cada estudiante participará en una prueba tipo carrera/laberinto.\n• El robot deberá seguir una linterna o avanzar en un trayecto guiado por luz.\n• El foco será demostrar la lógica de movimiento y reacción a la luz.",
+    "objetivos": [
+      "1.\tValidar el funcionamiento completo del robot seguidor de luz en un entorno real.",
+      "2.\tAfianzar la seguridad técnica y emocional del estudiante frente a su proyecto.",
+      "3.\tPrepararse para una presentación estructurada y orgullosa del resultado.",
+      "📍Modalidad: Individual y grupal – ensayo y juego colaborativo."
+    ],
+    "desarrollo": [
+      "•\t15 min – Preparación del entorno de prueba:",
+      "Se organiza el espacio físico con una pista de cartón, obstáculos de papel, curvas marcadas o túneles.",
+      "Se ubican linternas fijas o móviles según el reto.",
+      "•\t30 min – Ensayo libre de cada robot:",
+      "Cada estudiante realiza una ronda de prueba individual.",
+      "Observa qué puede mejorar (posición de sensores, velocidad, calibración, cableado).",
+      "Se permite hacer ajustes rápidos, apoyados por el docente.",
+      "•\t30 min – Carrera simbólica o reto por equipos:",
+      "Puede ser una de estas opciones:",
+      "•\tCarrera de precisión (no de velocidad): el que llegue más lejos siguiendo la luz.",
+      "•\tReto por obstáculos: linterna fija al final de un pasillo.",
+      "•\tDemostración libre ante el grupo: “Así se comporta mi robot”.",
+      "•\t15 min – Cierre:",
+      "Reflexión y retroalimentación general.",
+      "Cada estudiante responde en voz alta o en ficha:",
+      "– ¿Qué aprendí en todo este proceso?",
+      "– ¿Qué me gustaría mostrar a mi familia en la próxima clase?"
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Qué parte del robot funcionó mejor? ¿Cuál necesito ajustar?",
+      "•\t¿Qué aprendí del comportamiento de mi robot al enfrentarse al circuito?",
+      "•\t¿Estoy listo para mostrar mi trabajo a otras personas?"
+    ],
+    "preguntasPropuestas": [
+      "•\t¿Qué pasa si hay demasiada o muy poca luz?",
+      "•\t¿Qué parte del diseño podría mejorar para la próxima versión?",
+      "•\t¿Qué aprendí de ver los robots de mis compañeros?"
+    ],
+    "guia": [
+      "•\tConvertir la clase en un evento motivador y divertido.",
+      "•\tDar tiempo a cada estudiante para brillar, incluso si el robot no funciona perfecto.",
+      "•\tPromover el respeto y la celebración de los logros de todos.",
+      "•\tDocumentar el proceso con fotos o video si es posible."
+    ],
+    "conceptos": [
+      "•\tIteración final: última versión funcional antes de mostrar un producto.",
+      "•\tValidación externa: probar que algo funcione ante otros.",
+      "•\tReflexión práctica: aprender a reconocer fortalezas y oportunidades de mejora."
+    ],
+    "aplicacion": "• Esta clase enseña que los proyectos no se quedan solo en teoría, sino que se prueban, se muestran y se celebran.\n• También nos muestra que el esfuerzo, la paciencia y la colaboración tienen un resultado tangible.",
+    "herramientas": [
+      "•\tRobot completo con todos sus sistemas (motores, sensores, LEDs, estructura).",
+      "•\tPista de cartón o papel (recta, curva, laberinto, etc.)",
+      "•\tLinternas fijas o móviles",
+      "•\tMaterial para ajustes finales (cinta, cables, pinzas, batería extra)",
+      "•\tCronómetro o medidor simbólico (si haces competencia)",
+      "•\tFicha de reflexión escrita"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "nan"
+    ]
+  },
+  {
+    "n": 12,
+    "titulo": "Seguidor de Luz\nPresentación padres",
+    "resumen": "Demostración: \n\n• Cada estudiante presentará su robot seguidor de luz frente a padres, familiares.\n• Explicará con sus palabras qué hace su robot y cómo funciona.\n• Hará una demostración real en la pista de prueba.",
+    "objetivos": [
+      "1.\tFomentar la expresión oral y la seguridad en sí mismos a través de la presentación de su trabajo.",
+      "2.\tMostrar el funcionamiento del robot frente a una audiencia.",
+      "3.\tCelebrar el proceso de aprendizaje técnico y emocional recorrido.",
+      "📍Modalidad: Individual – presentación pública guiada."
+    ],
+    "desarrollo": [
+      "•\t15 min – Preparación del espacio:",
+      "Se organiza un espacio con mesas, pista de prueba, decoración sencilla y espacio para público.",
+      "Se da a cada estudiante una cartulina o ficha con su nombre y el nombre de su robot (si tiene).",
+      "•\t30 min – Ensayo individual con acompañamiento docente:",
+      "Cada niño practica cómo va a explicar su proyecto:",
+      "– “Este es mi robot”",
+      "– “Tiene dos ojos que detectan luz”",
+      "– “Cuando ve más luz a un lado, gira hacia allá”",
+      "– “Esto lo aprendí con el 555, LDR y potenciómetros”",
+      "•\t30 min – Presentación en vivo:",
+      "Uno por uno, los estudiantes presentan su robot al público, lo prueban en la pista, y reciben aplausos y preguntas.",
+      "Se les puede dar un diploma, sticker o medalla simbólica al terminar.",
+      "•\t15 min – Cierre y despedida:",
+      "Palabras del docente agradeciendo el esfuerzo.",
+      "Entrega de reconocimientos.",
+      "Espacio para fotos y felicitaciones.",
+      "Opcional: compartir breve refrigerio o recuerdo físico."
+    ],
+    "preguntasObjetivo": [
+      "•\t¿Puedo explicar qué hace mi robot con mis propias palabras?",
+      "•\t¿Cómo me siento al mostrar lo que construí?",
+      "•\t¿Qué fue lo que más me gustó de este proyecto?"
+    ],
+    "preguntasPropuestas": [
+      "•\t¿Qué fue lo más difícil de construir? ¿Y lo más divertido?",
+      "•\t¿A quién le dedicarías este logro?",
+      "•\t¿Qué robot de tus compañeros te gustó más y por qué?"
+    ],
+    "guia": [
+      "•\tPreparar a los estudiantes emocionalmente para presentarse en público.",
+      "•\tEnfatizar que no importa si el robot no funciona perfecto: lo valioso es el proceso.",
+      "•\tValidar cada esfuerzo con palabras positivas y reconocimientos visibles.",
+      "•\tFacilitar que los padres hagan preguntas sencillas y afectuosas."
+    ],
+    "conceptos": [
+      "•\tComunicación técnica: explicar lo aprendido de manera clara.",
+      "•\tAutoexpresión: hablar desde la experiencia.",
+      "•\tValor del proceso: más allá del resultado, importa el camino recorrido."
+    ],
+    "aplicacion": "• En la vida, como en esta clase, mostrar lo que hacemos con nuestras manos y corazón nos llena de orgullo.\n• Aprender a hablar de nuestro trabajo y compartirlo nos hace crecer y conectar con los demás.",
+    "herramientas": [
+      "nan"
+    ],
+    "tinkercad": "",
+    "adjuntos": [
+      "nan"
+    ]
+  }
+];
+
+
+    // ================== Render UI ==================
+    const nav = document.getElementById('classNav');
+    const grid = document.getElementById('cards');
+    const headerTitle = document.getElementById('headerTitle');
+
+    function classSlug(n){ return `clase-${n}` }
+    function imgPath(kind, n){ return `img/${kind}${n}.png` }
+
+    function renderNav(items){
+      nav.innerHTML = items.map(({n, titulo}) => `
+        <a href="#${classSlug(n)}" data-n="${n}">
+          <span class="dot"></span>
+          <span>Clase ${n}: ${titulo}</span>
+        </a>`).join('');
+    }
+
+    function sectionList(items){
+      return items && items.length ? `<ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul>` : '<p style="color:#7b8a97">—</p>'
+    }
+
+    function renderCards(items){
+      grid.innerHTML = items.map(c=>{
+        const n=c.n;
+        return `
+        <article class="card" id="${classSlug(n)}">
+          <header>
+            <div class="title">
+              <h3>Clase ${n}: ${c.titulo}</h3>
+              <div class="meta">Duración: 90 minutos · Nivel: Inicial</div>
+            </div>
+          </header>
+          <div class="content">
+            <div class="kpis" aria-label="Objetivos">
+              ${c.objetivos.map(o=>`<span class="kpi">${o}</span>`).join('')}
+            </div>
+            <p>${c.resumen}</p>
+
+            <div class="imgs">
+              <figure>
+                <img src="${imgPath('diagrama', n)}" alt="Diagrama clase ${n}" onerror="this.style.opacity=.3; this.alt='(Agrega img/diagrama${n}.png)';"/>
+                <figcaption>Diagrama</figcaption>
+              </figure>
+              <figure>
+                <img src="${imgPath('circuito', n)}" alt="Circuito clase ${n}" onerror="this.style.opacity=.3; this.alt='(Agrega img/circuito${n}.png)';"/>
+                <figcaption>Circuito</figcaption>
+              </figure>
+            </div>
+
+            <div class="cta">
+              ${c.tinkercad ? `<a class="btn small teal" href="${c.tinkercad}" target="_blank" rel="noopener">Abrir en Tinkercad</a>` : ''}
+              <span class="chip">#ERB2</span>
+              <span class="chip">#Robótica</span>
+            </div>
+
+            <details class="more">
+              <summary>Ver contenido completo</summary>
+              <div class="two-col">
+                <div class="section">
+                  <h4>Desarrollo (paso a paso)</h4>
+                  ${sectionList(c.desarrollo)}
+                </div>
+                <div class="section">
+                  <h4>Preguntas objetivo</h4>
+                  ${sectionList(c.preguntasObjetivo)}
+                </div>
+                <div class="section">
+                  <h4>Preguntas propuestas</h4>
+                  ${sectionList(c.preguntasPropuestas)}
+                </div>
+                <div class="section">
+                  <h4>Guía pedagógica</h4>
+                  ${sectionList(c.guia)}
+                </div>
+                <div class="section">
+                  <h4>Conceptos clave</h4>
+                  ${sectionList(c.conceptos)}
+                </div>
+                <div class="section">
+                  <h4>Aplicación a la vida</h4>
+                  <p>${c.aplicacion || '—'}</p>
+                </div>
+                <div class="section">
+                  <h4>Herramientas necesarias</h4>
+                  ${sectionList(c.herramientas)}
+                </div>
+                <div class="section">
+                  <h4>Archivos adjuntos</h4>
+                  ${c.adjuntos && c.adjuntos.length ? `<ul>${c.adjuntos.map(a=>`<li>${a}</li>`).join('')}</ul>` : '<p style="color:#7b8a97">—</p>'}
+                </div>
+              </div>
+            </details>
+          </div>
+        </article>`
+      }).join('');
+    }
+
+    renderNav(MALLA);
+    renderCards(MALLA);
+
+    // ================== UX: Active Link, Filter, Expand/Collapse ==================
+    const links = [...nav.querySelectorAll('a')];
+    const sections = MALLA.map(({n})=> document.getElementById(classSlug(n)));
+
+    const io = new IntersectionObserver((entries)=>{
+      const visible = entries.filter(e=>e.isIntersecting).sort((a,b)=> b.intersectionRatio - a.intersectionRatio)[0];
+      if(!visible) return;
+      const id = visible.target.id;
+      [...document.querySelectorAll('.nav a')].forEach(a=> a.classList.toggle('active', a.getAttribute('href') === `#${id}`));
+      const n = id.split('-')[1];
+      headerTitle.textContent = `Malla ERB 2 · Clase ${n}`;
+    }, { rootMargin: "-40% 0px -55% 0px", threshold:[0, .1, .25, .5, .75, 1] });
+
+    sections.forEach(sec=> io.observe(sec));
+
+    // Filter
+    document.getElementById('filter').addEventListener('input', (e)=>{
+      const q = e.target.value.toLowerCase();
+      const filtered = MALLA.filter(c => `${c.n} ${c.titulo} ${c.resumen} ${c.objetivos.join(' ')} ${c.conceptos.join(' ')}`.toLowerCase().includes(q));
+      renderNav(filtered);
+    });
+
+    // Expand/Collapse all: controla <details>
+    const getDetails = ()=> [...document.querySelectorAll('details.more')];
+    document.getElementById('expandAll').addEventListener('click',()=> getDetails().forEach(d=> d.open = true));
+    document.getElementById('collapseAll').addEventListener('click',()=> getDetails().forEach(d=> d.open = false));
+
+    // Keyboard shortcut: G go to top
+    window.addEventListener('keydown', (e)=>{ if(e.key.toLowerCase()==='g'){ window.scrollTo({top:0, behavior:'smooth'}) } });
+  </script>
+
+  <div id="lightbox">
+    <img src="" alt="Expanded image"/>
+  </div>
+  <script>
+    // Lightbox JS
+    document.querySelectorAll('.imgs img').forEach(img => {
+      img.style.cursor = 'zoom-in';
+      img.addEventListener('click', () => {
+        const lb = document.getElementById('lightbox');
+        lb.querySelector('img').src = img.src;
+        lb.style.display = 'flex';
+      });
+    });
+    document.getElementById('lightbox').addEventListener('click', e => {
+      if (e.target.id === 'lightbox' || e.target.tagName === 'IMG') {
+        document.getElementById('lightbox').style.display = 'none';
+      }
+    });
+  </script>
+
+\1
+</html>
